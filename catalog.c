@@ -41,6 +41,11 @@
 #include <libxml/threads.h>
 #include <libxml/globals.h>
 
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <Windows.h>
+
 #include "buf.h"
 
 #define MAX_DELEGATE	50
@@ -85,8 +90,6 @@ static char XML_XML_DEFAULT_CATALOG[256] = "file:///etc/xml/catalog";
 #define GetModuleFileNameA GetModuleFileName
 #else
 #if !defined(_WINDOWS_)
-void* __stdcall GetModuleHandleA(const char*);
-unsigned long __stdcall GetModuleFileNameA(void*, char*, unsigned long);
 #endif
 #endif
 #endif
@@ -3097,6 +3100,30 @@ xmlInitializeCatalogData(void) {
 
     xmlCatalogInitialized = 1;
 }
+
+static char *
+fromW(const wchar_t *u16String)
+{
+    char *string = NULL;
+
+    if (u16String) {
+        int wLen =
+            WideCharToMultiByte(CP_UTF8, MB_ERR_INVALID_CHARS, u16String,
+                                -1, NULL, 0, NULL, NULL);
+        if (wLen) {
+            string = xmlMalloc(wLen);
+            if (string) {
+                if (WideCharToMultiByte
+                    (CP_UTF8, 0, u16String, -1, string, wLen, NULL, NULL) == 0) {
+                    xmlFree(string);
+                    string = NULL;
+                }
+            }
+        }
+    }
+
+    return string;
+}
 /**
  * xmlInitializeCatalog:
  *
@@ -3126,27 +3153,24 @@ xmlInitializeCatalog(void) {
 	if (catalogs == NULL)
 #if defined(_WIN32) && defined(_MSC_VER)
     {
-		void* hmodule;
-		hmodule = GetModuleHandleA("libxml2.dll");
-		if (hmodule == NULL)
-			hmodule = GetModuleHandleA(NULL);
-		if (hmodule != NULL) {
-			char buf[256];
-			unsigned long len = GetModuleFileNameA(hmodule, buf, 255);
-			if (len != 0) {
-				char* p = &(buf[len]);
-				while (*p != '\\' && p > buf)
-					p--;
-				if (p != buf) {
-					xmlChar* uri;
-					strncpy(p, "\\..\\etc\\catalog", 255 - (p - buf));
-					uri = xmlCanonicPath((const xmlChar*)buf);
-					if (uri != NULL) {
-						strncpy(XML_XML_DEFAULT_CATALOG, uri, 255);
-						xmlFree(uri);
-					}
+		char wbuf[256];
+		unsigned long len = GetModuleFileNameW(NULL, wbuf, 255);
+		if (len != 0) {
+			char *buf = fromW(wbuf);
+			len = strlen(buf);
+			char* p = &(buf[len]);
+			while (*p != '\\' && p > buf)
+				p--;
+			if (p != buf) {
+				xmlChar* uri;
+				strncpy(p, "\\..\\etc\\catalog", 255 - (p - buf));
+				uri = xmlCanonicPath((const xmlChar*)buf);
+				if (uri != NULL) {
+					strncpy(XML_XML_DEFAULT_CATALOG, uri, 255);
+					xmlFree(uri);
 				}
 			}
+			xmlFree(buf);
 		}
 		catalogs = XML_XML_DEFAULT_CATALOG;
     }

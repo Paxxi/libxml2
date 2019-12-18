@@ -78,7 +78,7 @@
 # if defined(_WIN32_WCE)
 #  define strcasecmp(x,y) _stricmp(x,y)
 # else
-#  define strcasecmp(x,y) strcmpi(x,y)
+#  define strcasecmp(x,y) _strcmpi(x,y)
 # endif
 #elif defined(TRIO_PLATFORM_OS400)
 # define USE_STRCASECMP

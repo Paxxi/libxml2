@@ -314,7 +314,11 @@ xmlModulePlatformSymbol(void *handle, const char *name, void **symbol)
 static void *
 xmlModulePlatformOpen(const char *name)
 {
+#ifdef MS_APP
+	return NULL;
+#else
     return LoadLibraryA(name);
+#endif
 }
 
 /*

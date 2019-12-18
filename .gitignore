@@ -55,12 +55,10 @@ include/Makefile
 include/Makefile.in
 include/libxml/Makefile
 include/libxml/Makefile.in
-include/libxml/xmlversion.h
 install-sh
 libtool
 libxml-2.0-uninstalled.pc
 libxml-2.0.pc
-libxml2-config.cmake
 libxml2.la
 libxml2.spec
 list
@@ -114,7 +112,6 @@ testrecurse
 tmp
 tst.c
 tst
-xml2-config
 xml2Conf.sh
 xmlcatalog
 xmlconf
@@ -123,3 +120,4 @@ xstc/Makefile
 xstc/Makefile.in
 xstc/Tests
 xstc/xsts-*.tar.gz
+build*/
